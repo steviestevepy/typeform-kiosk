@@ -1,32 +1,61 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <title>Survey</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+    }
+    iframe {
+      border: 0;
+      width: 100%;
+      height: 100vh;
+    }
+  </style>
 </head>
-<body style="margin:0">
+<body>
 
-<iframe
-  id="tf"
-  src="https://form.typeform.com/to/D7n5AWQv"
-  style="border:0;width:100%;height:100vh;"
-></iframe>
+  <iframe
+    id="tf"
+    src="https://form.typeform.com/to/D7n5AWQv"
+    allow="camera; microphone; autoplay; encrypted-media;"
+  ></iframe>
 
-<script>
-  let timer;
-  const TIMEOUT = 3 * 60 * 1000; // 3 minutes
+  <script>
+    let inactivityTimer;
 
-  function resetTimer() {
-    clearTimeout(timer);
-    timer = setTimeout(() => location.reload(), TIMEOUT);
-  }
+    const INACTIVITY_TIME = 3 * 60 * 1000; // 3 minutes
 
-  ['mousemove','keydown','scroll','touchstart'].forEach(e =>
-    document.addEventListener(e, resetTimer, true)
-  );
+    function restartTypeform() {
+      const iframe = document.getElementById("tf");
+      const src = iframe.src;
 
-  resetTimer();
-</script>
+      // unload form
+      iframe.src = "about:blank";
+
+      // reload form shortly after
+      setTimeout(() => {
+        iframe.src = src;
+      }, 150);
+    }
+
+    function resetTimer() {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => {
+        restartTypeform();   // 🔁 only restarts the form
+      }, INACTIVITY_TIME);
+    }
+
+    // what counts as activity
+    ['mousemove', 'keydown', 'scroll', 'touchstart'].forEach(evt => {
+      document.addEventListener(evt, resetTimer, true);
+    });
+
+    // start timer on load
+    resetTimer();
+  </script>
 
 </body>
 </html>
