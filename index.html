@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Survey</title>
+</head>
+<body style="margin:0">
+
+<iframe
+  id="tf"
+  src="https://form.typeform.com/to/D7n5AWQv"
+  style="border:0;width:100%;height:100vh;"
+></iframe>
+
+<script>
+  let timer;
+  const TIMEOUT = 3 * 60 * 1000; // 3 minutes
+
+  function resetTimer() {
+    clearTimeout(timer);
+    timer = setTimeout(() => location.reload(), TIMEOUT);
+  }
+
+  ['mousemove','keydown','scroll','touchstart'].forEach(e =>
+    document.addEventListener(e, resetTimer, true)
+  );
+
+  resetTimer();
+</script>
+
+</body>
+</html>
