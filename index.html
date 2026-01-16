@@ -11,9 +11,16 @@
       font-family: Arial, sans-serif;
     }
 
-    #container {
-      position: relative;
+    /* Layout: form + fixed footer */
+    #page {
+      display: flex;
+      flex-direction: column;
       height: 100vh;
+    }
+
+    #form-container {
+      flex: 1;
+      position: relative;
     }
 
     iframe {
@@ -22,29 +29,20 @@
       height: 100%;
     }
 
-    /* Overlay buttons */
-    #overlay {
-      position: absolute;
-      inset: 0;
-      display: none;              
+    /* Bottom button bar */
+    #footer {
+      height: 70px;
+      background: #f5f5f5;
+      border-top: 1px solid #ddd;
+      display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(0,0,0,0.55);
-      z-index: 10;
+      gap: 20px;
     }
 
-    #buttons {
-      background: white;
-      padding: 30px 40px;
-      border-radius: 10px;
-      text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
-
-    #buttons button {
-      font-size: 18px;
-      padding: 12px 28px;
-      margin: 10px;
+    #footer button {
+      font-size: 16px;
+      padding: 10px 24px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
@@ -56,87 +54,79 @@
 </head>
 <body>
 
-<div id="container">
+<div id="page">
 
-  <iframe
-    id="tf"
-    src="https://form.typeform.com/to/D7n5AWQv"
-    allow="camera; microphone; autoplay;"
-  ></iframe>
+  <!-- FORM AREA -->
+  <div id="form-container">
+    <iframe
+      id="tf"
+      src="https://form.typeform.com/to/D7n5AWQv"
+      allow="camera; microphone; autoplay;"
+    ></iframe>
+  </div>
 
-  <!-- Overlay with buttons -->
-  <div id="overlay">
-    <div id="buttons">
-      <h2>What would you like to do?</h2>
-      <button id="restartBtn">Restart</button>
-      <button id="leaveBtn">Leave</button>
-    </div>
+  <!-- ALWAYS-VISIBLE BUTTON BAR -->
+  <div id="footer">
+    <button id="restartBtn">Restart</button>
+    <button id="leaveBtn">Leave</button>
   </div>
 
 </div>
 
 <script>
-  const overlay = document.getElementById("overlay");
-  const iframe  = document.getElementById("tf");
-
-  const SAME_PAGE_URL = window.location.href;
+  const iframe = document.getElementById("tf");
 
   /* ---------- FORM CONTROL ---------- */
 
   function restartTypeform() {
     const src = iframe.src;
-    iframe.src = "about:blank";
-    setTimeout(() => iframe.src = src, 150);
+    iframe.src = "about:blank";     // unload
+    setTimeout(() => {
+      iframe.src = src;            // reload
+    }, 150);
   }
 
   function leavePage() {
-    window.location.href = SAME_PAGE_URL; // same tab redirect
+    // reload same page in same tab
+    window.location.href = window.location.origin + window.location.pathname;
   }
 
   /* ---------- BUTTON HANDLERS ---------- */
 
   document.getElementById("restartBtn").onclick = () => {
-    hideOverlay();
     restartTypeform();
   };
 
   document.getElementById("leaveBtn").onclick = () => {
-    hideOverlay();
     leavePage();
   };
 
-  /* ---------- OVERLAY CONTROL ---------- */
+  /* ---------- INACTIVITY TIMER ---------- */
 
-  function showOverlay() {
-    overlay.style.display = "flex";
-  }
-
-  function hideOverlay() {
-    overlay.style.display = "none";
-  }
-
-  /* ---------- WHEN TO SHOW BUTTONS ---------- */
-
-  // Show after inactivity
-  let timer;
+  let inactivityTimer;
   const INACTIVITY_TIME = 3 * 60 * 1000; // 3 minutes
 
   function resetTimer() {
-    clearTimeout(timer);
-    timer = setTimeout(showOverlay, INACTIVITY_TIME);
+    clearTimeout(inactivityTimer);
+    inactivityTimer = setTimeout(() => {
+      restartTypeform();           // 🔁 auto-restart after inactivity
+    }, INACTIVITY_TIME);
   }
 
-  ['mousemove','keydown','scroll','touchstart'].forEach(e =>
-    document.addEventListener(e, resetTimer, true)
-  );
-
-  resetTimer();
-
-  // Also show if tab loses focus (kiosk safety)
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) showOverlay();
+  // What counts as activity
+  ['mousemove','keydown','scroll','touchstart'].forEach(evt => {
+    document.addEventListener(evt, resetTimer, true);
   });
 
+  // Start timer on load
+  resetTimer();
+
+  // Extra safety for kiosks: reset if tab loses focus
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      restartTypeform();
+    }
+  });
 </script>
 
 </body>
