@@ -70,7 +70,7 @@
 <body>
 
 <div id="page">
-  <div id="form-container" id="typeformEmbed"></div>
+  <div id="form-container"></div>
   <div id="spacer"></div>
 </div>
 
@@ -89,7 +89,7 @@
   const INACTIVITY_TIME = 3 * 60 * 1000; // 3 minutes
   let remainingMs = INACTIVITY_TIME;
   let lastTick = Date.now();
-  let tfWidget; // will hold the Typeform widget
+  let tfWidget;
 
   // Initialize Typeform Embed
   function initTypeform() {
@@ -99,8 +99,12 @@
       {
         hideHeaders: true,
         hideFooter: true,
-        onQuestionChange: () => remainingMs = INACTIVITY_TIME,
-        onSubmit: () => remainingMs = INACTIVITY_TIME
+        onQuestionChange: () => {
+          remainingMs = INACTIVITY_TIME;
+        },
+        onSubmit: () => {
+          remainingMs = INACTIVITY_TIME;
+        }
       }
     );
   }
@@ -111,7 +115,7 @@
   function restartTypeform() {
     console.log("Restarting form due to inactivity");
     if (tfWidget && tfWidget.unmount) {
-      tfWidget.unmount(); // remove current widget
+      tfWidget.unmount();
     }
     setTimeout(initTypeform, 150);
     remainingMs = INACTIVITY_TIME;
@@ -125,7 +129,7 @@
   document.getElementById("restartBtn").onclick = restartTypeform;
   document.getElementById("leaveBtn").onclick   = leavePage;
 
-  // Reset timer on page-level activity
+  // Page-level activity resets timer
   ['mousemove','keydown','scroll','touchstart'].forEach(evt => {
     document.addEventListener(evt, () => remainingMs = INACTIVITY_TIME, true);
   });
@@ -136,7 +140,8 @@
     const delta = now - lastTick;
     lastTick = now;
 
-    remainingMs -= delta; // countdown
+    // countdown
+    remainingMs -= delta;
 
     const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
     timerLabel.textContent = `${remainingSec}s`;
