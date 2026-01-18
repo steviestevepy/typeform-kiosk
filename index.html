@@ -89,22 +89,31 @@
   const INACTIVITY_TIME = 3 * 60 * 1000; // 3 minutes
   let remainingMs = INACTIVITY_TIME;
   let lastTick = Date.now();
+  let tfWidget; // will hold the Typeform widget
+
+  // Initialize Typeform Embed
+  function initTypeform() {
+    tfWidget = window.typeformEmbed.makeWidget(
+      document.getElementById('form-container'),
+      "https://form.typeform.com/to/D7n5AWQv",
+      {
+        hideHeaders: true,
+        hideFooter: true,
+        onQuestionChange: () => remainingMs = INACTIVITY_TIME,
+        onSubmit: () => remainingMs = INACTIVITY_TIME
+      }
+    );
+  }
+
+  initTypeform(); // first render
 
   // Restart the form
   function restartTypeform() {
     console.log("Restarting form due to inactivity");
-    tfWidget.unmount(); // remove current embed
-    setTimeout(() => {
-      tfWidget = window.typeformEmbed.makeWidget(document.getElementById('typeformEmbed'),
-        "https://form.typeform.com/to/D7n5AWQv",
-        {
-          hideHeaders: true,
-          hideFooter: true,
-          onQuestionChange: () => remainingMs = INACTIVITY_TIME,
-          onSubmit: () => remainingMs = INACTIVITY_TIME
-        }
-      );
-    }, 150);
+    if (tfWidget && tfWidget.unmount) {
+      tfWidget.unmount(); // remove current widget
+    }
+    setTimeout(initTypeform, 150);
     remainingMs = INACTIVITY_TIME;
   }
 
@@ -121,24 +130,13 @@
     document.addEventListener(evt, () => remainingMs = INACTIVITY_TIME, true);
   });
 
-  // Initialize Typeform Embed
-  let tfWidget = window.typeformEmbed.makeWidget(document.getElementById('typeformEmbed'),
-    "https://form.typeform.com/to/D7n5AWQv",
-    {
-      hideHeaders: true,
-      hideFooter: true,
-      onQuestionChange: () => remainingMs = INACTIVITY_TIME,
-      onSubmit: () => remainingMs = INACTIVITY_TIME
-    }
-  );
-
   // Main timer loop
   setInterval(() => {
     const now = Date.now();
     const delta = now - lastTick;
     lastTick = now;
 
-    remainingMs -= delta; // Always count down since iframe activity is captured via events
+    remainingMs -= delta; // countdown
 
     const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
     timerLabel.textContent = `${remainingSec}s`;
