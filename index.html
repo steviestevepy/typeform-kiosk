@@ -55,11 +55,19 @@
     #restartBtn { background: #2c7be5; color: white; }
     #leaveBtn   { background: #777;   color: white; }
 
+    /* 🔎 DEBUG TIMER – FORCE VISIBLE */
     #debugTimer {
-      font-size: 12px;
-      color: #555;
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      background: rgba(0,0,0,0.75);
+      color: white;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 13px;
       font-family: monospace;
-      margin-left: 12px;
+      z-index: 10001;
+      pointer-events: none;
     }
 
     #spacer {
@@ -83,8 +91,9 @@
 <div id="footer">
   <button id="restartBtn">Restart</button>
   <button id="leaveBtn">Leave</button>
-  <span id="debugTimer">180s</span>
 </div>
+
+<span id="debugTimer">180s</span>
 
 <script>
   const iframe = document.getElementById("tf");
@@ -93,8 +102,6 @@
   const INACTIVITY_TIME = 3 * 60 * 1000;
   let lastActivity = Date.now();
   let iframeWasFocused = false;
-
-  /* ---------- HELPERS ---------- */
 
   function markActivity(reason = "") {
     lastActivity = Date.now();
@@ -117,19 +124,14 @@
   document.getElementById("restartBtn").onclick = restartTypeform;
   document.getElementById("leaveBtn").onclick   = leavePage;
 
-  /* ---------- ACTIVITY SOURCES ---------- */
-
   ['mousemove','keydown','scroll','touchstart'].forEach(evt => {
     document.addEventListener(evt, () => markActivity(evt), true);
   });
-
-  /* ---------- TIMER LOOP ---------- */
 
   setInterval(() => {
     const now = Date.now();
     const isIframeFocused = document.activeElement === iframe;
 
-    // Detect focus transition ONLY
     if (isIframeFocused && !iframeWasFocused) {
       markActivity("iframe focus gained");
     }
@@ -142,12 +144,12 @@
     );
 
     timerLabel.textContent = `${remaining}s`;
-    timerLabel.style.color = remaining <= 10 ? "red" : "#555";
+    timerLabel.style.background =
+      remaining <= 10 ? "rgba(180,0,0,0.85)" : "rgba(0,0,0,0.75)";
 
     if (remaining === 0) {
       restartTypeform();
     }
-
   }, 1000);
 
   markActivity("init");
