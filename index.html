@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <title>Survey</title>
+
   <style>
     html, body {
       margin: 0;
@@ -68,7 +69,9 @@
       pointer-events: none;
     }
 
-    #spacer { height: 70px; }
+    #spacer {
+      height: 70px;
+    }
   </style>
 </head>
 <body>
@@ -89,13 +92,13 @@
   <button id="leaveBtn">Leave</button>
 </div>
 
-<span id="debugTimer">360s</span>
+<span id="debugTimer">180s</span>
 
 <script>
   const iframe = document.getElementById("tf");
   const timerLabel = document.getElementById("debugTimer");
 
-  const INACTIVITY_TIME = 6 * 60 * 1000; // 6 minutes
+  const INACTIVITY_TIME = 3 * 60 * 1000; // 3 minutes
   let remainingMs = INACTIVITY_TIME;
   let lastTick = Date.now();
 
@@ -110,7 +113,8 @@
 
   // Leave page
   function leavePage() {
-    window.location.href = window.location.origin + window.location.pathname;
+    window.location.href =
+      window.location.origin + window.location.pathname;
   }
 
   document.getElementById("restartBtn").onclick = restartTypeform;
@@ -118,7 +122,9 @@
 
   // Reset timer on page-level activity
   ['mousemove','keydown','scroll','touchstart'].forEach(evt => {
-    document.addEventListener(evt, () => remainingMs = INACTIVITY_TIME, true);
+    document.addEventListener(evt, () => {
+      remainingMs = INACTIVITY_TIME;
+    }, true);
   });
 
   // Main timer loop
@@ -127,17 +133,17 @@
     const delta = now - lastTick;
     lastTick = now;
 
-    // Pause countdown if iframe is focused
     const iframeFocused = document.activeElement === iframe;
+
+    // Only count down when iframe is NOT focused
     if (!iframeFocused) {
       remainingMs -= delta;
     }
 
     const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
     timerLabel.textContent = `${remainingSec}s`;
-    timerLabel.style.background = remainingSec <= 10 
-      ? "rgba(180,0,0,0.85)" 
-      : "rgba(0,0,0,0.75)";
+    timerLabel.style.background =
+      remainingSec <= 10 ? "rgba(180,0,0,0.85)" : "rgba(0,0,0,0.75)";
 
     if (remainingMs <= 0) {
       restartTypeform();
