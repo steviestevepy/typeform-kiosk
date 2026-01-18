@@ -24,6 +24,13 @@
       position: relative;
     }
 
+    #debugTimer {
+      font-size: 12px;
+      color: #555;
+      margin-left: 12px;
+      font-family: monospace;
+    }
+
     iframe {
       border: 0;
       width: 100%;
@@ -86,15 +93,24 @@
 <div id="footer">
   <button id="restartBtn">Restart</button>
   <button id="leaveBtn">Leave</button>
+  <span id="debugTimer">180s</span>
 </div>
 
 <script>
   const iframe = document.getElementById("tf");
+  const timerLabel = document.getElementById("debugTimer");
+
+  const INACTIVITY_TIME = 3 * 60 * 1000; // 3 minutes
+  let lastActivity = Date.now();
+
+  /* ---------- HELPERS ---------- */
 
   function restartTypeform() {
+    console.log("Restarting form due to inactivity");
     const src = iframe.src;
     iframe.src = "about:blank";
     setTimeout(() => iframe.src = src, 150);
+    markActivity(); // reset timer after restart
   }
 
   function leavePage() {
@@ -102,46 +118,59 @@
       window.location.origin + window.location.pathname;
   }
 
+  function markActivity(reason = "") {
+    lastActivity = Date.now();
+    if (reason) console.log("Activity:", reason);
+  }
+
+  /* ---------- BUTTON HANDLERS ---------- */
+
   document.getElementById("restartBtn").onclick = restartTypeform;
   document.getElementById("leaveBtn").onclick   = leavePage;
 
-  /* ---------- INACTIVITY TIMER (FIXED) ---------- */
-
-  let lastActivity = Date.now();
-  const INACTIVITY_TIME = 3 * 60 * 1000; // 3 minutes
-
-  function markActivity() {
-    lastActivity = Date.now();
-  }
+  /* ---------- ACTIVITY SOURCES ---------- */
 
   // Page-level activity
   ['mousemove','keydown','scroll','touchstart'].forEach(evt => {
-    document.addEventListener(evt, markActivity, true);
+    document.addEventListener(evt, () => markActivity(evt), true);
   });
 
-  // Treat iframe focus as activity
-  iframe.addEventListener("load", () => {
-    markActivity();
-  });
+  // When iframe gains focus, treat as activity
+  window.addEventListener("focus", () => markActivity("window focus"));
 
-  window.addEventListener("focus", markActivity);
+  /* ---------- DEBUG TIMER LOOP ---------- */
 
-  // Polling check (robust)
   setInterval(() => {
     const now = Date.now();
 
-    // If iframe is focused, user is active
+    // If iframe is focused, user is interacting
     if (document.activeElement === iframe) {
-      markActivity();
-      return;
+      markActivity("iframe focused");
     }
 
-    if (now - lastActivity > INACTIVITY_TIME) {
+    const remaining = Math.max(
+      0,
+      Math.ceil((INACTIVITY_TIME - (now - lastActivity)) / 1000)
+    );
+
+    // Update UI
+    timerLabel.textContent = `${remaining}s`;
+
+    if (remaining <= 10) {
+      timerLabel.style.color = "red";
+    } else {
+      timerLabel.style.color = "#555";
+    }
+
+    if (remaining === 0) {
       restartTypeform();
-      markActivity();
     }
-  }, 1000);
-</script>
 
+  }, 1000);
+
+  // Initialise
+  markActivity("init");
+</script>
+  
 </body>
 </html>
