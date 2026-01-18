@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <title>Survey</title>
-
+  
   <style>
     html, body {
       margin: 0;
@@ -55,6 +55,7 @@
     #restartBtn { background: #2c7be5; color: white; }
     #leaveBtn   { background: #777;   color: white; }
 
+    /* 🔎 DEBUG TIMER – FORCE VISIBLE */
     #debugTimer {
       position: fixed;
       right: 16px;
@@ -98,20 +99,23 @@
   const iframe = document.getElementById("tf");
   const timerLabel = document.getElementById("debugTimer");
 
-  const INACTIVITY_TIME = 3 * 60 * 1000; // 3 minutes
-  let remainingMs = INACTIVITY_TIME;
-  let lastTick = Date.now();
+  const INACTIVITY_TIME = 3 * 60 * 1000;
+  let lastActivity = Date.now();
+  let iframeWasFocused = false;
 
-  // Restart the form
+  function markActivity(reason = "") {
+    lastActivity = Date.now();
+    if (reason) console.log("Activity:", reason);
+  }
+
   function restartTypeform() {
     console.log("Restarting form due to inactivity");
     const src = iframe.src;
     iframe.src = "about:blank";
     setTimeout(() => iframe.src = src, 150);
-    remainingMs = INACTIVITY_TIME;
+    markActivity("restart");
   }
 
-  // Leave page
   function leavePage() {
     window.location.href =
       window.location.origin + window.location.pathname;
@@ -120,35 +124,35 @@
   document.getElementById("restartBtn").onclick = restartTypeform;
   document.getElementById("leaveBtn").onclick   = leavePage;
 
-  // Reset timer on page-level activity
   ['mousemove','keydown','scroll','touchstart'].forEach(evt => {
-    document.addEventListener(evt, () => {
-      remainingMs = INACTIVITY_TIME;
-    }, true);
+    document.addEventListener(evt, () => markActivity(evt), true);
   });
 
-  // Main timer loop
   setInterval(() => {
     const now = Date.now();
-    const delta = now - lastTick;
-    lastTick = now;
+    const isIframeFocused = document.activeElement === iframe;
 
-    const iframeFocused = document.activeElement === iframe;
-
-    // Only count down when iframe is NOT focused
-    if (!iframeFocused) {
-      remainingMs -= delta;
+    if (isIframeFocused && !iframeWasFocused) {
+      markActivity("iframe focus gained");
     }
 
-    const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
-    timerLabel.textContent = `${remainingSec}s`;
-    timerLabel.style.background =
-      remainingSec <= 10 ? "rgba(180,0,0,0.85)" : "rgba(0,0,0,0.75)";
+    iframeWasFocused = isIframeFocused;
 
-    if (remainingMs <= 0) {
+    const remaining = Math.max(
+      0,
+      Math.ceil((INACTIVITY_TIME - (now - lastActivity)) / 1000)
+    );
+
+    timerLabel.textContent = `${remaining}s`;
+    timerLabel.style.background =
+      remaining <= 10 ? "rgba(180,0,0,0.85)" : "rgba(0,0,0,0.75)";
+
+    if (remaining === 0) {
       restartTypeform();
     }
   }, 1000);
+
+  markActivity("init");
 </script>
 
 </body>
