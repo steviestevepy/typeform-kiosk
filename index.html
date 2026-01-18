@@ -3,7 +3,6 @@
 <head>
   <meta charset="utf-8">
   <title>Survey</title>
-
   <style>
     html, body {
       margin: 0;
@@ -98,7 +97,6 @@
   const iframe = document.getElementById("tf");
   const timerLabel = document.getElementById("debugTimer");
 
-  // 6 minutes inactivity
   const INACTIVITY_TIME = 6 * 60 * 1000; // 6 minutes
   let remainingMs = INACTIVITY_TIME;
   let lastTick = Date.now();
@@ -114,8 +112,7 @@
 
   // Leave page
   function leavePage() {
-    window.location.href =
-      window.location.origin + window.location.pathname;
+    window.location.href = window.location.origin + window.location.pathname;
   }
 
   document.getElementById("restartBtn").onclick = restartTypeform;
