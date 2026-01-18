@@ -92,12 +92,13 @@
   <button id="leaveBtn">Leave</button>
 </div>
 
-<span id="debugTimer">180s</span>
+<span id="debugTimer">360s</span>
 
 <script>
   const iframe = document.getElementById("tf");
   const timerLabel = document.getElementById("debugTimer");
 
+  // 6 minutes inactivity
   const INACTIVITY_TIME = 6 * 60 * 1000; // 6 minutes
   let remainingMs = INACTIVITY_TIME;
   let lastTick = Date.now();
@@ -141,7 +142,7 @@
     }
 
     const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
-    timerLabel.textContent = ${remainingSec}s;
+    timerLabel.textContent = `${remainingSec}s`;
     timerLabel.style.background =
       remainingSec <= 10 ? "rgba(180,0,0,0.85)" : "rgba(0,0,0,0.75)";
 
