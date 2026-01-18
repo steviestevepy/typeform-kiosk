@@ -11,24 +11,15 @@
       font-family: Arial, sans-serif;
     }
 
-    /* Wrapper */
     #page {
       height: 100vh;
       display: flex;
       flex-direction: column;
     }
 
-    /* Form area */
     #form-container {
       flex: 1;
       position: relative;
-    }
-
-    #debugTimer {
-      font-size: 12px;
-      color: #555;
-      margin-left: 12px;
-      font-family: monospace;
     }
 
     iframe {
@@ -38,9 +29,8 @@
       display: block;
     }
 
-    /* ---- FIXED FOOTER (always visible) ---- */
     #footer {
-      position: fixed;       /* 👈 key fix */
+      position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
@@ -51,7 +41,7 @@
       align-items: center;
       justify-content: center;
       gap: 20px;
-      z-index: 9999;         /* 👈 above iframe */
+      z-index: 9999;
     }
 
     #footer button {
@@ -65,7 +55,13 @@
     #restartBtn { background: #2c7be5; color: white; }
     #leaveBtn   { background: #777;   color: white; }
 
-    /* prevent footer covering bottom of form */
+    #debugTimer {
+      font-size: 12px;
+      color: #555;
+      font-family: monospace;
+      margin-left: 12px;
+    }
+
     #spacer {
       height: 70px;
     }
@@ -74,8 +70,6 @@
 <body>
 
 <div id="page">
-
-  <!-- FORM -->
   <div id="form-container">
     <iframe
       id="tf"
@@ -83,13 +77,9 @@
       allow="camera; microphone; autoplay;"
     ></iframe>
   </div>
-
-  <!-- spacer so form isn't hidden by footer -->
   <div id="spacer"></div>
-
 </div>
 
-<!-- ALWAYS-VISIBLE BUTTON BAR -->
 <div id="footer">
   <button id="restartBtn">Restart</button>
   <button id="leaveBtn">Leave</button>
@@ -100,17 +90,23 @@
   const iframe = document.getElementById("tf");
   const timerLabel = document.getElementById("debugTimer");
 
-  const INACTIVITY_TIME = 3 * 60 * 1000; // 3 minutes
+  const INACTIVITY_TIME = 3 * 60 * 1000;
   let lastActivity = Date.now();
+  let iframeWasFocused = false;
 
   /* ---------- HELPERS ---------- */
+
+  function markActivity(reason = "") {
+    lastActivity = Date.now();
+    if (reason) console.log("Activity:", reason);
+  }
 
   function restartTypeform() {
     console.log("Restarting form due to inactivity");
     const src = iframe.src;
     iframe.src = "about:blank";
     setTimeout(() => iframe.src = src, 150);
-    markActivity(); // reset timer after restart
+    markActivity("restart");
   }
 
   function leavePage() {
@@ -118,49 +114,35 @@
       window.location.origin + window.location.pathname;
   }
 
-  function markActivity(reason = "") {
-    lastActivity = Date.now();
-    if (reason) console.log("Activity:", reason);
-  }
-
-  /* ---------- BUTTON HANDLERS ---------- */
-
   document.getElementById("restartBtn").onclick = restartTypeform;
   document.getElementById("leaveBtn").onclick   = leavePage;
 
   /* ---------- ACTIVITY SOURCES ---------- */
 
-  // Page-level activity
   ['mousemove','keydown','scroll','touchstart'].forEach(evt => {
     document.addEventListener(evt, () => markActivity(evt), true);
   });
 
-  // When iframe gains focus, treat as activity
-  window.addEventListener("focus", () => markActivity("window focus"));
-
-  /* ---------- DEBUG TIMER LOOP ---------- */
+  /* ---------- TIMER LOOP ---------- */
 
   setInterval(() => {
     const now = Date.now();
+    const isIframeFocused = document.activeElement === iframe;
 
-    // If iframe is focused, user is interacting
-    if (document.activeElement === iframe) {
-      markActivity("iframe focused");
+    // Detect focus transition ONLY
+    if (isIframeFocused && !iframeWasFocused) {
+      markActivity("iframe focus gained");
     }
+
+    iframeWasFocused = isIframeFocused;
 
     const remaining = Math.max(
       0,
       Math.ceil((INACTIVITY_TIME - (now - lastActivity)) / 1000)
     );
 
-    // Update UI
     timerLabel.textContent = `${remaining}s`;
-
-    if (remaining <= 10) {
-      timerLabel.style.color = "red";
-    } else {
-      timerLabel.style.color = "#555";
-    }
+    timerLabel.style.color = remaining <= 10 ? "red" : "#555";
 
     if (remaining === 0) {
       restartTypeform();
@@ -168,9 +150,8 @@
 
   }, 1000);
 
-  // Initialise
   markActivity("init");
 </script>
-  
+
 </body>
 </html>
