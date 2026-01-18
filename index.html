@@ -91,49 +91,56 @@
 <script>
   const iframe = document.getElementById("tf");
 
-  /* ---------- FORM CONTROL ---------- */
-
   function restartTypeform() {
     const src = iframe.src;
     iframe.src = "about:blank";
-    setTimeout(() => {
-      iframe.src = src;
-    }, 150);
+    setTimeout(() => iframe.src = src, 150);
   }
 
   function leavePage() {
-    // reload same page, same tab
     window.location.href =
       window.location.origin + window.location.pathname;
   }
 
-  /* ---------- BUTTON HANDLERS ---------- */
-
   document.getElementById("restartBtn").onclick = restartTypeform;
   document.getElementById("leaveBtn").onclick   = leavePage;
 
-  /* ---------- INACTIVITY TIMER ---------- */
+  /* ---------- INACTIVITY TIMER (FIXED) ---------- */
 
-  let inactivityTimer;
+  let lastActivity = Date.now();
   const INACTIVITY_TIME = 3 * 60 * 1000; // 3 minutes
 
-  function resetTimer() {
-    clearTimeout(inactivityTimer);
-    inactivityTimer = setTimeout(() => {
-      restartTypeform();
-    }, INACTIVITY_TIME);
+  function markActivity() {
+    lastActivity = Date.now();
   }
 
+  // Page-level activity
   ['mousemove','keydown','scroll','touchstart'].forEach(evt => {
-    document.addEventListener(evt, resetTimer, true);
+    document.addEventListener(evt, markActivity, true);
   });
 
-  resetTimer();
-
-  // kiosk safety
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) restartTypeform();
+  // Treat iframe focus as activity
+  iframe.addEventListener("load", () => {
+    markActivity();
   });
+
+  window.addEventListener("focus", markActivity);
+
+  // Polling check (robust)
+  setInterval(() => {
+    const now = Date.now();
+
+    // If iframe is focused, user is active
+    if (document.activeElement === iframe) {
+      markActivity();
+      return;
+    }
+
+    if (now - lastActivity > INACTIVITY_TIME) {
+      restartTypeform();
+      markActivity();
+    }
+  }, 1000);
 </script>
 
 </body>
