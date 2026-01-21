@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <title>Survey</title>
+
   <style>
     html, body {
       margin: 0;
@@ -10,52 +11,55 @@
       font-family: Arial, sans-serif;
     }
 
-    /* ---------- INTRO OVERLAY ---------- */
+    /* ---------- INTRO PAGE ---------- */
     #intro {
       position: fixed;
       inset: 0;
-      background: #000;
+      background: #f7f7f7;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      z-index: 20000;
+      text-align: center;
+      z-index: 10000;
     }
 
-    #intro img {
-      width: 90vw;
-      max-height: 75vh;
-      object-fit: contain;
+    #intro h1 {
+      font-size: 42px;
+      font-weight: 600;
       margin-bottom: 40px;
+      color: #222;
     }
 
     #startBtn {
-      font-size: 28px;
-      padding: 18px 60px;
+      font-size: 22px;
+      padding: 16px 48px;
       border: none;
-      border-radius: 10px;
-      cursor: pointer;
+      border-radius: 8px;
       background: #2c7be5;
       color: white;
+      cursor: pointer;
     }
 
-    /* ---------- ORIGINAL STYLES ---------- */
+    #startBtn:hover {
+      background: #1f5fbf;
+    }
+
+    /* ---------- SURVEY PAGE ---------- */
     #page {
       height: 100vh;
-      display: none; /* hidden until Start */
+      display: flex;
       flex-direction: column;
     }
 
     #form-container {
       flex: 1;
-      position: relative;
     }
 
     iframe {
       border: 0;
       width: 100%;
       height: 100%;
-      display: block;
     }
 
     #footer {
@@ -82,7 +86,7 @@
     }
 
     #restartBtn { background: #2c7be5; color: white; }
-    #leaveBtn   { background: #777;   color: white; }
+    #leaveBtn   { background: #777; color: white; }
 
     #debugTimer {
       position: fixed;
@@ -103,14 +107,13 @@
 </head>
 <body>
 
-<!-- INTRO SCREEN -->
+<!-- INTRO -->
 <div id="intro">
-  <!-- Upload this image to GitHub, e.g. assets/intro.jpg -->
-  <img src="assets/intro.jpg" alt="Intro">
+  <h1>Please Provide Your Feedback Here</h1>
   <button id="startBtn">Start Survey</button>
 </div>
 
-<!-- ORIGINAL PAGE -->
+<!-- SURVEY -->
 <div id="page">
   <div id="form-container">
     <iframe
@@ -131,78 +134,55 @@
 
 <script>
   const iframe = document.getElementById("tf");
+  const intro  = document.getElementById("intro");
   const timerLabel = document.getElementById("debugTimer");
-  const intro = document.getElementById("intro");
-  const page = document.getElementById("page");
 
   const INACTIVITY_TIME = 6 * 60 * 1000; // 6 minutes
   let remainingMs = INACTIVITY_TIME;
   let lastTick = Date.now();
-  let timerEnabled = false;
 
   // Start survey
   document.getElementById("startBtn").onclick = () => {
     intro.style.display = "none";
-    page.style.display = "flex";
     remainingMs = INACTIVITY_TIME;
-    lastTick = Date.now();
-    timerEnabled = true;
   };
 
-  
   function restartTypeform() {
-    console.log("Timeout → returning to intro");
-  
-    // reset iframe
+    intro.style.display = "flex";   // ⬅ back to intro
     const src = iframe.src;
     iframe.src = "about:blank";
     setTimeout(() => iframe.src = src, 150);
-  
-    // reset timer
     remainingMs = INACTIVITY_TIME;
-  
-    // SHOW INTRO, HIDE SURVEY
-    document.getElementById("intro").style.display = "flex";
-    document.getElementById("page").style.display = "none";
   }
 
-
-  // Leave page
   function leavePage() {
-    window.location.reload();
+    window.location.href = window.location.origin + window.location.pathname;
   }
 
   document.getElementById("restartBtn").onclick = restartTypeform;
   document.getElementById("leaveBtn").onclick   = leavePage;
 
-  // Reset timer on page-level activity ONLY
+  // Reset timer on page activity (NOT iframe)
   ['mousemove','keydown','scroll','touchstart'].forEach(evt => {
     document.addEventListener(evt, () => {
-      if (timerEnabled) remainingMs = INACTIVITY_TIME;
+      remainingMs = INACTIVITY_TIME;
     }, true);
   });
 
-  // Main timer loop (unchanged logic)
+  // Timer loop
   setInterval(() => {
-    if (!timerEnabled) return;
-
     const now = Date.now();
     const delta = now - lastTick;
     lastTick = now;
 
     remainingMs -= delta;
 
-    const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
-    timerLabel.textContent = `${remainingSec}s`;
-
+    const s = Math.max(0, Math.ceil(remainingMs / 1000));
+    timerLabel.textContent = `${s}s`;
     timerLabel.style.background =
-      remainingSec <= 10
-        ? "rgba(180,0,0,0.85)"
-        : "rgba(0,0,0,0.75)";
+      s <= 10 ? "rgba(180,0,0,0.85)" : "rgba(0,0,0,0.75)";
 
-    if (remainingMs <= 0) {
-      restartTypeform();
-    }
+    if (remainingMs <= 0) restartTypeform();
   }, 1000);
 </script>
 
