@@ -10,9 +10,39 @@
       font-family: Arial, sans-serif;
     }
 
+    /* ---------- INTRO OVERLAY ---------- */
+    #intro {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 20000;
+    }
+
+    #intro img {
+      max-width: 80%;
+      max-height: 60%;
+      object-fit: contain;
+      margin-bottom: 40px;
+    }
+
+    #startBtn {
+      font-size: 28px;
+      padding: 18px 60px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      background: #2c7be5;
+      color: white;
+    }
+
+    /* ---------- ORIGINAL STYLES ---------- */
     #page {
       height: 100vh;
-      display: flex;
+      display: none; /* hidden until Start */
       flex-direction: column;
     }
 
@@ -73,6 +103,14 @@
 </head>
 <body>
 
+<!-- INTRO SCREEN -->
+<div id="intro">
+  <!-- Upload this image to GitHub, e.g. assets/intro.jpg -->
+  <img src="assets/intro.jpg" alt="Intro">
+  <button id="startBtn">Start Survey</button>
+</div>
+
+<!-- ORIGINAL PAGE -->
 <div id="page">
   <div id="form-container">
     <iframe
@@ -94,37 +132,60 @@
 <script>
   const iframe = document.getElementById("tf");
   const timerLabel = document.getElementById("debugTimer");
+  const intro = document.getElementById("intro");
+  const page = document.getElementById("page");
 
   const INACTIVITY_TIME = 6 * 60 * 1000; // 6 minutes
   let remainingMs = INACTIVITY_TIME;
   let lastTick = Date.now();
+  let timerEnabled = false;
 
-  // Restart the form
+  // Start survey
+  document.getElementById("startBtn").onclick = () => {
+    intro.style.display = "none";
+    page.style.display = "flex";
+    remainingMs = INACTIVITY_TIME;
+    lastTick = Date.now();
+    timerEnabled = true;
+  };
+
+  
   function restartTypeform() {
-    console.log("Restarting form due to inactivity");
+    console.log("Timeout → returning to intro");
+  
+    // reset iframe
     const src = iframe.src;
     iframe.src = "about:blank";
     setTimeout(() => iframe.src = src, 150);
+  
+    // reset timer
     remainingMs = INACTIVITY_TIME;
+  
+    // SHOW INTRO, HIDE SURVEY
+    document.getElementById("intro").style.display = "flex";
+    document.getElementById("page").style.display = "none";
   }
+
 
   // Leave page
   function leavePage() {
-    window.location.href = window.location.origin + window.location.pathname;
+    window.location.reload();
   }
 
   document.getElementById("restartBtn").onclick = restartTypeform;
   document.getElementById("leaveBtn").onclick   = leavePage;
 
-  // Reset timer on any page-level activity
+  // Reset timer on page-level activity ONLY
   ['mousemove','keydown','scroll','touchstart'].forEach(evt => {
     document.addEventListener(evt, () => {
-      remainingMs = INACTIVITY_TIME;
+      if (timerEnabled) remainingMs = INACTIVITY_TIME;
     }, true);
   });
 
-  // Main timer loop (counts down constantly)
+  // Main timer loop (unchanged logic)
   setInterval(() => {
+    if (!timerEnabled) return;
+
     const now = Date.now();
     const delta = now - lastTick;
     lastTick = now;
@@ -133,15 +194,16 @@
 
     const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
     timerLabel.textContent = `${remainingSec}s`;
-    timerLabel.style.background = remainingSec <= 10 
-      ? "rgba(180,0,0,0.85)" 
-      : "rgba(0,0,0,0.75)";
+
+    timerLabel.style.background =
+      remainingSec <= 10
+        ? "rgba(180,0,0,0.85)"
+        : "rgba(0,0,0,0.75)";
 
     if (remainingMs <= 0) {
       restartTypeform();
     }
   }, 1000);
-
 </script>
 
 </body>
